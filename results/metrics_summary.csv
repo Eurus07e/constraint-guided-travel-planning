@@ -1,0 +1,14 @@
+method,method_id,delivery_rate,commonsense_micro,commonsense_macro,hard_micro,hard_macro,final_pass_rate
+Direct Prompt,direct,100.0,80.62,20.56,60.95,57.22,20.0
+Constraint-Checklist Direct,constraint_direct_json,95.0,77.43,20.56,60.95,57.22,20.0
+Generic Self-Refine,generic_self_refine_r1,95.0,74.17,13.33,57.62,51.67,12.22
+Program Planner v1,program_v1,100.0,71.67,21.11,24.05,16.67,8.89
+LLM-Assisted Program Planner,program_v23_best,100.0,82.15,18.33,35.48,42.78,12.22
+Verifier-Guided Hybrid Selector,verifier_hybrid_agent,100.0,87.22,31.11,63.81,65.0,27.22
+Verifier-Directed Repair Control,seeded_repair_probe,100.0,90.9,52.78,65.71,68.89,48.89
+Seeded Multi-Agent Planner,multi_agent_seeded_r2_n3,100.0,90.07,49.44,61.67,67.22,46.67
+CC-MAR,cc_mar_r3,100.0,88.26,38.33,71.19,72.22,35.0
+CC-MAR w/o Critic,cc_mar_no_critic,100.0,88.26,37.22,69.52,71.67,33.89
+CC-MAR w/o Board,cc_mar_no_board,100.0,88.19,39.44,69.52,70.0,34.44
+CC-MAR w/o Specialization,cc_mar_no_specialization,100.0,88.4,40.56,70.48,71.11,36.11
+Single Generic Repair Agent,single_generic_repair_agent,100.0,87.85,37.78,70.48,71.11,33.89

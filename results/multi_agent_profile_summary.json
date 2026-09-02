@@ -1,0 +1,17 @@
+{
+  "num_instances": 180,
+  "final_choice_counts": {
+    "program_seed_revised_r2": 80,
+    "program_seed": 35,
+    "direct_seed_revised_r2": 21,
+    "direct_seed": 44
+  },
+  "revised_selected": 101,
+  "seed_selected": 79,
+  "scratch_generated": 68,
+  "scratch_skipped": 112,
+  "deterministic_reflection": 133,
+  "llm_reflection": 47,
+  "avg_incremental_llm_calls": 2.21,
+  "max_incremental_llm_calls": 6
+}

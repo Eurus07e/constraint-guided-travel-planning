@@ -1,0 +1,71 @@
+\begin{thebibliography}{9}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Gao et~al.(2022)Gao, Chen, Zhang, Shao, and Wang]{gao2022pal}
+Luyu Gao, Shouyuan Chen, Jiachen Zhang, Ruilin Shao, and Jun Wang.
+\newblock Pal: Program-aided language models.
+\newblock \emph{arXiv preprint arXiv:2211.10435}, 2022.
+
+\bibitem[Liu et~al.(2023)Liu, Iter, Xu, Wang, Xu, and Zhu]{liu2023geval}
+Yang Liu, Dan Iter, Yichong Xu, Shuohang Wang, Ruochen Xu, and Chenguang Zhu.
+\newblock G-eval: Nlg evaluation using {GPT}-4 with better human alignment.
+\newblock \emph{arXiv preprint arXiv:2303.16634}, 2023.
+
+\bibitem[Madaan et~al.(2023)Madaan, Tandon, Gupta, Hallinan, Gao, Wiegreffe,
+  Alon, Prabhumoye, Yang, Gupta, Majumder, Gupta, Yazdanbakhsh, and
+  Clark]{madaan2023selfrefine}
+Aman Madaan, Niket Tandon, Prakhar Gupta, Skyler Hallinan, Luyu Gao, Sarah
+  Wiegreffe, Uri Alon, Shrimai Prabhumoye, Yiming Yang, Shashank Gupta,
+  Bodhisattwa~Prasad Majumder, Kavya Gupta, Amir Yazdanbakhsh, and Peter Clark.
+\newblock Self-refine: Iterative refinement with self-feedback.
+\newblock \emph{arXiv preprint arXiv:2303.17651}, 2023.
+
+\bibitem[Shinn et~al.(2023)Shinn, Cassano, Berman, Gopinath, and
+  Yao]{shinn2023reflexion}
+Noah Shinn, Federica Cassano, Edward Berman, Ashwin Gopinath, and Shunyu Yao.
+\newblock Reflexion: Language agents with verbal reinforcement learning.
+\newblock \emph{arXiv preprint arXiv:2303.11366}, 2023.
+
+\bibitem[Wang et~al.(2023)Wang, Xu, Lan, Hu, Lee, and
+  Lim]{wang2023planandsolve}
+Lei Wang, Wanyu Xu, Yihuai Lan, Zhiqiang Hu, Roy Ka-Wei Lee, and Ee-Peng Lim.
+\newblock Plan-and-solve prompting: Improving zero-shot chain-of-thought
+  reasoning by large language models.
+\newblock \emph{arXiv preprint arXiv:2305.04091}, 2023.
+
+\bibitem[Wang et~al.(2022)Wang, Wei, Schuurmans, Le, Chi, and
+  Zhou]{wang2022selfconsistency}
+Xuezhi Wang, Jason Wei, Dale Schuurmans, Quoc Le, Ed~Chi, and Denny Zhou.
+\newblock Self-consistency improves chain of thought reasoning in language
+  models.
+\newblock \emph{arXiv preprint arXiv:2203.11171}, 2022.
+
+\bibitem[Xie et~al.(2024)Xie, Zhang, Chen, Zhu, Lou, Tian, Xiao, and
+  Su]{xie2024travelplanner}
+Jian Xie, Kai Zhang, Jiangjie Chen, Tinghui Zhu, Renze Lou, Yuandong Tian,
+  Yanghua Xiao, and Yu~Su.
+\newblock Travelplanner: A benchmark for real-world planning with language
+  agents.
+\newblock In \emph{Forty-first International Conference on Machine Learning},
+  2024.
+
+\bibitem[Yao et~al.(2023{\natexlab{a}})Yao, Yu, Zhao, Shafran, Griffiths, Cao,
+  and Narasimhan]{yao2023treeofthoughts}
+Shunyu Yao, Dian Yu, Jeffrey Zhao, Izhak Shafran, Thomas Griffiths, Yuan Cao,
+  and Karthik Narasimhan.
+\newblock Tree of thoughts: Deliberate problem solving with large language
+  models.
+\newblock \emph{arXiv preprint arXiv:2305.10601}, 2023{\natexlab{a}}.
+
+\bibitem[Yao et~al.(2023{\natexlab{b}})Yao, Zhao, Yu, Du, Shafran, Narasimhan,
+  and Cao]{yao2023react}
+Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak Shafran, Karthik Narasimhan,
+  and Yuan Cao.
+\newblock React: Synergizing reasoning and acting in language models.
+\newblock \emph{arXiv preprint arXiv:2210.03629}, 2023{\natexlab{b}}.
+
+\end{thebibliography}

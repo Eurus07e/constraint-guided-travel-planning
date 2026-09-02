@@ -1,0 +1,104 @@
+{
+  "methods": {
+    "cc_mar_r3": {
+      "audit_likely_pass": 108,
+      "confusion": {
+        "fn": 0,
+        "fp": 45,
+        "tn": 72,
+        "tp": 63
+      },
+      "mean_audit_score": 87.58333333333333,
+      "mean_fatal_count": 0.6555555555555556,
+      "metrics": {
+        "accuracy": 0.75,
+        "negative_predictive_value": 1.0,
+        "precision": 0.5833333333333334,
+        "recall": 1.0,
+        "specificity": 0.6153846153846154
+      },
+      "n": 180,
+      "scorer_final_pass": 63
+    },
+    "direct": {
+      "audit_likely_pass": 69,
+      "confusion": {
+        "fn": 0,
+        "fp": 33,
+        "tn": 111,
+        "tp": 36
+      },
+      "mean_audit_score": 76.5,
+      "mean_fatal_count": 1.3111111111111111,
+      "metrics": {
+        "accuracy": 0.8166666666666667,
+        "negative_predictive_value": 1.0,
+        "precision": 0.5217391304347826,
+        "recall": 1.0,
+        "specificity": 0.7708333333333334
+      },
+      "n": 180,
+      "scorer_final_pass": 36
+    },
+    "multi_agent_seeded_r2_n3": {
+      "audit_likely_pass": 133,
+      "confusion": {
+        "fn": 0,
+        "fp": 49,
+        "tn": 47,
+        "tp": 84
+      },
+      "mean_audit_score": 92.86666666666666,
+      "mean_fatal_count": 0.39444444444444443,
+      "metrics": {
+        "accuracy": 0.7277777777777777,
+        "negative_predictive_value": 1.0,
+        "precision": 0.631578947368421,
+        "recall": 1.0,
+        "specificity": 0.4895833333333333
+      },
+      "n": 180,
+      "scorer_final_pass": 84
+    },
+    "seeded_repair_probe": {
+      "audit_likely_pass": 132,
+      "confusion": {
+        "fn": 0,
+        "fp": 44,
+        "tn": 48,
+        "tp": 88
+      },
+      "mean_audit_score": 93.31111111111112,
+      "mean_fatal_count": 0.35555555555555557,
+      "metrics": {
+        "accuracy": 0.7555555555555555,
+        "negative_predictive_value": 1.0,
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "specificity": 0.5217391304347826
+      },
+      "n": 180,
+      "scorer_final_pass": 88
+    },
+    "verifier_hybrid_agent": {
+      "audit_likely_pass": 81,
+      "confusion": {
+        "fn": 0,
+        "fp": 32,
+        "tn": 99,
+        "tp": 49
+      },
+      "mean_audit_score": 86.57777777777778,
+      "mean_fatal_count": 0.8444444444444444,
+      "metrics": {
+        "accuracy": 0.8222222222222222,
+        "negative_predictive_value": 1.0,
+        "precision": 0.6049382716049383,
+        "recall": 1.0,
+        "specificity": 0.7557251908396947
+      },
+      "n": 180,
+      "scorer_final_pass": 49
+    }
+  }
+}

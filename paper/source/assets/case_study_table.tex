@@ -1,0 +1,9 @@
+\begin{tabular}{@{}p{0.11\linewidth}p{0.27\linewidth}p{0.28\linewidth}p{0.24\linewidth}@{}}
+\toprule
+Case & Seed failure & Repair action & Outcome \\
+\midrule
+21 & Program seed uses an Orlando accommodation with a 30-night minimum stay. & Replace the lodging with a valid short-stay option and slightly reduce meal cost. & Converts a one-fatal plan into a likely-pass candidate under reproduced evaluation. \\
+28 & Direct seed is incomplete and the program seed contains an invalid Norfolk accommodation. & Preserve the stronger route scaffold and patch the lodging locally. & Produces a complete five-day plan with verifier score 100 on the diagnostic run. \\
+32 & Revised candidate still introduces an invalid flight despite otherwise plausible daily structure. & Attempt local transportation repair, then fall back to the LLM reviser when deterministic patching is insufficient. & Remains a benchmark failure, illustrating brittle route repair when the valid transport space is sparse. \\
+\bottomrule
+\end{tabular}

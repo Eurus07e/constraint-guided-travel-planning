@@ -1,0 +1,51 @@
+{
+  "direct_final_pass_count": 36,
+  "program_v23_best_final_pass_count": 22,
+  "verifier_hybrid_agent_final_pass_count": 49,
+  "direct_program_union_final_pass_count": 49,
+  "direct_only_count": 27,
+  "program_only_count": 13,
+  "both_count": 9,
+  "selection_counts": {
+    "direct": 110,
+    "program": 70
+  },
+  "diagnostic_cases": {
+    "21": {
+      "final_choice": "direct",
+      "final_audit_score": 84,
+      "fatal_issues": [],
+      "warnings": [
+        "day 3 repeated breakfast",
+        "day 5 repeated breakfast",
+        "day 5 repeated lunch"
+      ]
+    },
+    "22": {
+      "final_choice": "direct",
+      "final_audit_score": 84,
+      "fatal_issues": [],
+      "warnings": [
+        "day 4 repeated breakfast",
+        "day 4 repeated lunch",
+        "day 4 repeated dinner"
+      ]
+    },
+    "28": {
+      "final_choice": "program",
+      "final_audit_score": 88,
+      "fatal_issues": [
+        "Simple Spacious RM near Queens Center Mall & NYPD, Norfolk requires 30 nights"
+      ],
+      "warnings": []
+    },
+    "40": {
+      "final_choice": "direct",
+      "final_audit_score": 92,
+      "fatal_issues": [],
+      "warnings": [
+        "day 5 repeated breakfast"
+      ]
+    }
+  }
+}
