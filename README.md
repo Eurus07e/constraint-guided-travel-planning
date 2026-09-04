@@ -5,8 +5,8 @@
 **Verifier-guided local repair for reliable language-agent planning**
 
 [![Paper](https://img.shields.io/badge/paper-PDF-b31b1b?style=flat-square)](paper/constraint_contract_multi_agent_repair.pdf)
-[![Python](https://img.shields.io/badge/python-3.10%2B-3776ab?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-offline%20unit%20suite-2ea44f?style=flat-square)](#quick-start)
+[![Python](https://img.shields.io/badge/python-3.11-3776ab?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Tests](https://github.com/Eurus07e/constraint-guided-travel-planning/actions/workflows/tests.yml/badge.svg)](https://github.com/Eurus07e/constraint-guided-travel-planning/actions/workflows/tests.yml)
 [![License](https://img.shields.io/badge/license-MIT-111111?style=flat-square)](LICENSE)
 
 Course research project for *Introduction to Artificial Intelligence*, Nanjing University.
@@ -33,12 +33,12 @@ All values below are percentages from a local reproduction of the official Trave
 
 | Method | Final Pass | Commonsense Macro | Hard Macro |
 |---|---:|---:|---:|
-| Direct prompt | 20.00 | 20.56 | 57.22 |
-| Generic self-refine | 12.22 | 13.33 | 51.67 |
-| Verifier-guided seed selection | 27.22 | 31.11 | 65.00 |
-| **Verifier-directed repair control** | **48.89** | **52.78** | 68.89 |
-| Seeded multi-agent planner | 46.67 | 49.44 | 67.22 |
-| **CC-MAR** | 35.00 | 38.33 | **72.22** |
+| Direct Prompt | 20.00 | 20.56 | 57.22 |
+| Generic Self-Refine | 12.22 | 13.33 | 51.67 |
+| Verifier-Guided Hybrid Selector | 27.22 | 31.11 | 65.00 |
+| Verifier-Directed Repair Control | 48.89 | 52.78 | 68.89 |
+| Seeded Multi-Agent Planner | 46.67 | 49.44 | 67.22 |
+| CC-MAR | 35.00 | 38.33 | 72.22 |
 
 The complete table, including CC-MAR ablations, is available in [`results/metrics_summary.csv`](results/metrics_summary.csv).
 
@@ -47,7 +47,7 @@ The complete table, including CC-MAR ablations, is available in [`results/metric
 - A deterministic audit layer for route closure, city count, database membership, transportation consistency, accommodation rules, user constraints, and estimated cost.
 - A seeded repair pipeline that ranks heterogeneous drafts, repairs only diagnosed failures, re-audits candidates, and conservatively promotes improvements.
 - CC-MAR, a typed patch protocol with route, entity, lodging, and budget agents; a critic for cross-contract risk; and a deterministic mediator.
-- Resume-safe experiment runners with per-instance caches and debug records for long API experiments.
+- Fingerprinted experiment runners with atomic checkpoints and per-request accounting.
 - Controlled baselines, component ablations, failure analysis, difficulty breakdowns, and reproducible paper artifacts.
 
 ## Method
@@ -83,57 +83,62 @@ Specialist agents propose field-level patches instead of rewriting the whole iti
 git clone https://github.com/Eurus07e/constraint-guided-travel-planning.git
 cd constraint-guided-travel-planning
 
-python -m venv .venv
+python3.11 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements-research.txt
+python -m pip install -r requirements-research.txt -c requirements-lock.txt
+python -m pip check
 
-python -m unittest \
-  scripts.test_analyze_verifier_calibration \
-  scripts.test_api_endpoint_helpers \
-  scripts.test_evaluate_submission_subset \
-  scripts.test_repair_operator_ablations \
-  scripts.test_strong_baseline_runner
+python -m unittest discover -s scripts -p 'test_*.py' -v
+python -m scripts.verify_frozen
 ```
 
-These tests exercise parsing, metric summaries, ablation configuration, and API endpoint construction without making model calls.
+Use Python 3.11 on Linux or macOS. The lock file fixes the validated dependency
+versions. These tests check parsing, evaluation, cache and checkpoint recovery,
+and request failures without contacting a model provider.
 
 ## Reproduction
 
-### 1. Obtain the benchmark data
-
-Download the database linked by the [official TravelPlanner repository](https://github.com/OSU-NLP-Group/TravelPlanner#setup-environment) and place its extracted folders under `database/`. The research code expects the original accommodations, attractions, flights, restaurants, distance-matrix, and background files. The validation table used by the local evaluator is `database/validation.csv`.
-
-The full database, raw generations, API caches, and debug logs are intentionally excluded from this repository because they are large and may contain provider-specific traces.
-
-### 2. Configure an OpenAI-compatible model endpoint
+The repository includes 13 frozen validation submissions and per-sample outcomes.
+Start with [the reproduction guide](docs/reproduction.md): it separates offline
+artifact verification, database preparation, exact historical reconstruction,
+and normal runner usage. The rebuilt deterministic control matches all 180
+historical plans and reproduces **88/180 Final Pass**.
 
 ```bash
-export OPENAI_API_KEY="your-key"
-export OPENAI_API_BASE="https://your-provider.example/v1"
-export MODEL_NAME="your-model"
+# No database or model calls required:
+python -m scripts.verify_frozen
+
+# After preparing the official database:
+python -m scripts.prepare_data
+python -m scripts.reproduce --limit 3 --output runs/demo.jsonl
+python -m scripts.reproduce --output runs/reproduced_repair.jsonl
+python -m scripts.evaluate_submission_subset --set-type validation \
+  --input runs/reproduced_repair.jsonl --output runs/reproduced_metrics.json
 ```
 
-Never commit `.env` files or credentials. The published experiments used `deepseek-v4-flash`; model behavior and API availability can change, so exact regeneration may differ from the stored results.
+`TP_DATABASE_DIR` selects an existing database. `DIRECT_SUBMISSION_FILE` and
+`PROGRAM_SUBMISSION_FILE` select alternative seeds. The default seeds are the
+published historical Direct and Program predictions, regardless of which model
+is used for new repair calls.
 
-### 3. Run the main methods
+## Running and maintaining the repository
 
-```bash
-# Strong direct/self-refine baselines
-STRATEGY=constraint_direct_json python strong_baseline_runner.py
-
-# Seeded verifier-repair pipeline
-python seeded_multi_agent_planner.py
-
-# Constraint-contract multi-agent repair
-STRATEGY=cc_mar_r3 python contract_multi_agent_repair.py
-```
-
-Both repair methods consume stored seed submissions. See the paper appendix for exact paths, settings, and the evaluation commands used for the reported table.
+- Full and subset scoring share indexed sample validation and consistent metric
+  denominators. See [replay checks](results/replay_verification.json).
+- `legacy-v1` preserves historical reconstruction. Regular runs use `strict-v2`
+  to check completeness, city alignment, entity diversity and database eligibility
+  before early stopping. [Audit regression checks](results/audit_comparison.json)
+  cover the stored validation predictions.
+- Output directories are isolated by configuration, code, data and seed hashes.
+  Checkpoints use atomic writes, and API attempts and cache hits are recorded.
+  See [runner configuration and recovery](docs/running.md).
+- [Validation commands](docs/validation.md) cover offline tests, benchmark replay
+  and deterministic reconstruction. These checks require no paid model calls.
 
 ## Scope and limitations
 
 - The main course-paper comparisons are single stored runs on one benchmark validation split; they should not be read as universal architectural rankings.
-- The internal audit is deliberately conservative and is not identical to the official scorer.
+- The versioned internal audit is independent of the final scorer; its calibration is measured separately.
 - A benchmark-valid itinerary is not real-world travel advice. Live availability, safety, visas, accessibility, and disruptions are outside the benchmark.
 - CC-MAR improves hard-constraint coverage, but its current specialist decomposition is not reliably better than simpler repair policies.
 

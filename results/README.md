@@ -1,12 +1,15 @@
 # Result artifacts
 
-`metrics_summary.csv` contains the compact table used in the project README
-and final course paper. Values are percentages from a local reproduction of
-the official TravelPlanner evaluation protocol on the 180-instance validation
-split.
+- `metrics_summary.csv`: existing validation metrics, unchanged.
+- `frozen/`: predictions, sample IDs, expected outcomes and file hashes needed to
+  reproduce the existing results without regenerating model outputs.
+- `replay_verification.json`: fresh scoring checks for all 13 stored methods.
+- `reconstruction_verification.json`: exact 180-plan deterministic reconstruction.
+- `audit_comparison.json`: audit regression checks on the stored predictions.
 
-The repository intentionally omits raw model generations, request caches, and
-per-instance debug logs. Those artifacts are large, provider-specific, and not
-required to inspect the headline comparison. The final paper documents the
-experimental settings, limitations, and artifact paths used in the original
-working directory.
+Run `python -m scripts.verify_frozen` without benchmark data or credentials.
+Run `python -m scripts.replay_frozen` with the official database to recompute
+validity. See `docs/reproduction.md` for setup and commands.
+
+Raw provider responses, credentials, database files and request caches are
+excluded from Git. Frozen predictions omit the original task queries.

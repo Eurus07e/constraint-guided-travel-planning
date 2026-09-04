@@ -1,7 +1,11 @@
 import json
 import re
-import gradio as gr
 import os
+from utils.paths import DATABASE
+
+def _annotation_error(message):
+    import gradio as gr
+    return gr.Error(message)
 
 def load_line_json_data(filename):
     data = []
@@ -60,17 +64,17 @@ def judge_valid_info(info):
 
 def judge_submit_info(info, current_day, label, annotation_data, *tested_data):
     if info == "" or not info:
-        raise gr.Error("Day {} {} is empty!".format(current_day, label))
+        raise _annotation_error("Day {} {} is empty!".format(current_day, label))
     if info != "-":
         if label == "transportation":
             if not judge_valid_transportation(info, annotation_data):
-                raise gr.Error("Day {} {} is invalid! Please note the transportation.".format(current_day, label))
+                raise _annotation_error("Day {} {} is invalid! Please note the transportation.".format(current_day, label))
         elif label == "accommodation":
             if not judge_valid_room_type(info, annotation_data, tested_data[0]):
-                raise gr.Error("Day {} {} is invalid! Please note the room type.".format(current_day, label))
+                raise _annotation_error("Day {} {} is invalid! Please note the room type.".format(current_day, label))
             
             if not  judge_valid_room_rule(info, annotation_data, tested_data[0]):
-                raise gr.Error("Day {} {} is invalid! Please note the house rules.".format(current_day, label))
+                raise _annotation_error("Day {} {} is invalid! Please note the house rules.".format(current_day, label))
         
     return True
 
@@ -153,7 +157,7 @@ def get_city_list(days, deparure_city, destination):
     if days == 3:
         city_list.append(destination)
     else:
-        city_set = open('../database/background/citySet_with_states.txt').read().split('\n')
+        city_set = (DATABASE / 'background/citySet_with_states.txt').read_text().strip().splitlines()
         state_city_map = {}
         for unit in city_set:
             city, state = unit.split('\t')

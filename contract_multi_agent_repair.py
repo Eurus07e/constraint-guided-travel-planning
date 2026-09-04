@@ -9,6 +9,10 @@ from copy import deepcopy
 from pathlib import Path
 
 import pandas as pd
+from utils.llm_client import complete, ModelRequestError
+from utils.run_state import configure_run, atomic_write_text, exclusive_run
+from utils.runner_inputs import select_rows, valid_plan_container, load_seed_submission as load_jsonl
+from utils.paths import DATABASE, seed_path
 
 from utils.plan_audit import (
     _load_accommodations,
@@ -23,9 +27,9 @@ MODEL_NAME = os.getenv("MODEL_NAME", "deepseek-v4-flash")
 STRATEGY = os.getenv("STRATEGY", "cc_mar_r3")
 MODE = "sole-planning"
 
-DATA_PATH = Path("database/validation.csv")
-DIRECT_SUBMISSION_FILE = Path("evaluation/validation_deepseek-v4-flash_direct_sole-planning_submission.jsonl")
-PROGRAM_SUBMISSION_FILE = Path("evaluation/validation_deepseek-v4-flash_program_v23_best_sole-planning_submission.jsonl")
+DATA_PATH = DATABASE / "validation.csv"
+DIRECT_SUBMISSION_FILE = seed_path("direct")
+PROGRAM_SUBMISSION_FILE = seed_path("program")
 
 OUT_ROOT = Path(os.getenv("OUT_ROOT", f"outputs_{STRATEGY}"))
 OUTPUT_DIR = OUT_ROOT / "validation"
@@ -40,7 +44,7 @@ DISABLE_BOARD = os.getenv("DISABLE_BOARD", "0") == "1"
 GENERIC_AGENTS = os.getenv("GENERIC_AGENTS", "0") == "1"
 SINGLE_AGENT = os.getenv("SINGLE_AGENT", "0") == "1"
 MAX_REFERENCE_CHARS = int(os.getenv("MAX_REFERENCE_CHARS", "14000"))
-MAX_RETRIES = int(os.getenv("MAX_RETRIES", "8"))
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
 
 REQUIRED_PLAN_KEYS = [
     "days",
@@ -137,13 +141,6 @@ def build_task(row):
         "candidate_cities_from_reference": extract_candidate_cities(row["reference_information"]),
         "reference_information_compact": compact_reference_information(row["reference_information"]),
     }
-
-
-def load_jsonl(path):
-    path = Path(path)
-    if not path.exists():
-        return []
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
 def parse_json_payload(text):
@@ -263,52 +260,8 @@ def chat_completions_url(api_base):
 
 
 def call_llm(system_prompt, user_prompt, max_tokens=4096, temperature=0.0, cache_tag="default"):
-    api_key = os.getenv("OPENAI_API_KEY", "")
-    api_base = os.getenv("OPENAI_API_BASE", "https://api.deepseek.com").rstrip("/")
-    model_name = os.getenv("MODEL_NAME", MODEL_NAME)
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not set")
-
-    payload = {
-        "model": model_name,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    }
-    cache_key = hashlib.sha256(
-        json.dumps({"strategy": STRATEGY, "tag": cache_tag, "payload": payload}, sort_keys=True, ensure_ascii=False).encode("utf-8")
-    ).hexdigest()
-    cache_path = CACHE_DIR / f"{cache_key}.txt"
-    if cache_path.exists():
-        return cache_path.read_text(encoding="utf-8")
-
-    req = urllib.request.Request(
-        chat_completions_url(api_base),
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + api_key,
-            "Connection": "close",
-        },
-        method="POST",
-    )
-    last_err = None
-    for attempt in range(MAX_RETRIES):
-        try:
-            with urllib.request.urlopen(req, timeout=180) as resp:
-                raw = resp.read().decode("utf-8")
-                obj = json.loads(raw)
-                message = obj["choices"][0]["message"]
-                content = message.get("content") or message.get("reasoning_content") or ""
-                cache_path.write_text(content, encoding="utf-8")
-                return content
-        except Exception as exc:
-            last_err = exc
-            time.sleep(min(45, 4 + attempt * 6))
-    raise RuntimeError(f"LLM call failed after retries: {last_err}")
+    return complete(system_prompt, user_prompt, cache_dir=CACHE_DIR, model=MODEL_NAME,
+                    max_tokens=max_tokens, temperature=temperature, cache_tag=cache_tag, json_mode=False)
 
 
 def violation_vector(audit):
@@ -348,6 +301,12 @@ def protected_regression(before_audit, after_audit):
         return "protected_check_regressed:transportation_conflict"
     if int(after_audit.get("fatal_count", 0)) > int(before_audit.get("fatal_count", 0)):
         return "fatal_count_increased"
+    for key, passed in before_audit.get("strict_checks", {}).items():
+        if passed and not after_audit.get("strict_checks", {}).get(key, False):
+            return f"protected_check_regressed:{key}"
+    for key in ["invalid_entity_count", "invalid_transportation_count"]:
+        if after_audit.get(key, 0) > before_audit.get(key, 0):
+            return f"{key}_increased"
     return ""
 
 
@@ -387,7 +346,8 @@ def contract_board(audit):
         text = str(issue).lower()
         contract = "entity" if "repeated" in text or "mismatch" in text else "warning"
         violations.append({"contract": contract, "issue": issue})
-    return violations[:20]
+    violations.extend(audit.get("strict_issues", []))
+    return violations[:40]
 
 
 def active_roles(audit):
@@ -397,6 +357,10 @@ def active_roles(audit):
         return list(ROLE_SPECS.keys())
     board = contract_board(audit)
     contracts = {item["contract"] for item in board}
+    if contracts.intersection({"complete_information", "destination_region", "local_transportation"}):
+        contracts.add("route")
+    if contracts.intersection({"current_city_alignment", "restaurant_diversity", "attraction_diversity", "complete_information", "entity_eligibility"}):
+        contracts.add("entity")
     roles = []
     if {"route", "transportation"}.intersection(contracts):
         roles.append("route_agent")
@@ -495,10 +459,38 @@ def critic_prompt(task, current_plan, audit, proposals):
     return system_prompt, user_prompt
 
 
+
+ROLE_FIELDS = {
+    "route_agent": {"current_city", "transportation"},
+    "entity_agent": {"breakfast", "lunch", "dinner", "attraction", "accommodation"},
+    "lodging_agent": {"accommodation"},
+    "budget_agent": {"breakfast", "lunch", "dinner", "accommodation"},
+}
+
+
+def validate_role_changes(role_id, before, after):
+    if not after:
+        return
+    allowed = set(REQUIRED_PLAN_KEYS)-{"days"} if GENERIC_AGENTS or role_id=="generic_repair_agent" else ROLE_FIELDS.get(role_id, set())
+    if len(before) != len(after):
+        raise ValueError("patch may not change plan length")
+    for old, new in zip(before, after):
+        changed = {key for key in set(old)|set(new) if old.get(key)!=new.get(key)}
+        if not changed <= allowed:
+            raise ValueError(f"{role_id} changed fields outside its contract: {sorted(changed-allowed)}")
+
+
 def apply_patches(plan, patches):
-    revised = deepcopy(plan)
     if not isinstance(patches, list):
-        return revised
+        raise ValueError("patches must be a list")
+    for patch in patches:
+        if not isinstance(patch, dict) or type(patch.get("day")) is not int:
+            raise ValueError("patch day must be an integer")
+        if not 1 <= patch["day"] <= len(plan) or patch.get("field") not in set(REQUIRED_PLAN_KEYS)-{"days"}:
+            raise ValueError("patch day or field outside allowed schema")
+        if not isinstance(patch.get("value"), str):
+            raise ValueError("patch value must be a string")
+    revised = deepcopy(plan)
     for patch in patches:
         if not isinstance(patch, dict):
             continue
@@ -581,6 +573,8 @@ def propose_from_agent(role_id, task, current_plan, audit, round_idx, board_stat
     try:
         raw = call_llm(sp, up, max_tokens=4096, temperature=0.05, cache_tag=f"agent_{role_id}_idx{idx}_r{round_idx}")
         parsed = parse_json_payload(raw)
+    except ModelRequestError:
+        raise
     except Exception as exc:
         return {
             "proposal_id": f"{role_id}_r{round_idx}",
@@ -592,7 +586,12 @@ def propose_from_agent(role_id, task, current_plan, audit, round_idx, board_stat
         }
     if not isinstance(parsed, dict):
         parsed = salvage_patch_payload(raw, role_id)
-    plan = proposal_to_plan(parsed, current_plan, int(task["days"]))
+    try:
+        plan = proposal_to_plan(parsed, current_plan, int(task["days"]))
+        validate_role_changes(role_id, current_plan, plan)
+    except ValueError as exc:
+        parsed = {"repairable": False, "error": str(exc)}
+        plan = []
     return {
         "proposal_id": f"{role_id}_r{round_idx}",
         "agent_id": role_id,
@@ -622,6 +621,8 @@ def critic_judgments(task, current_plan, audit, proposals, idx, round_idx):
     try:
         raw = call_llm(sp, up, max_tokens=2048, temperature=0, cache_tag=f"critic_idx{idx}_r{round_idx}")
         parsed = parse_json_payload(raw)
+    except ModelRequestError:
+        raise
     except Exception as exc:
         parsed = {"judgments": [], "error": str(exc)}
     judgments = {}
@@ -661,6 +662,9 @@ def mediate(task, current_plan, before_audit, proposals, judgments):
                     "critic": critic,
                 }
             )
+            continue
+        if critic.get("status") == "invalid":
+            decisions.append({"proposal_id":proposal_id,"agent_id":proposal["agent_id"],"decision":"rejected","reason":"critic_invalid","critic":critic})
             continue
         after_audit = audit_plan(task, proposal["plan"])
         after_vector = violation_vector(after_audit)
@@ -744,8 +748,11 @@ def load_existing_plan(idx):
     if not (output_path.exists() and debug_path.exists()):
         return None
     try:
+        if json.loads(debug_path.read_text()).get("status") != "completed":
+            return None
         payload = json.loads(output_path.read_text(encoding="utf-8"))[0]
-        return payload.get(f"{MODEL_NAME}_{STRATEGY}_{MODE}_parsed_results")
+        plan = payload.get(f"{MODEL_NAME}_{STRATEGY}_{MODE}_parsed_results")
+        return plan if valid_plan_container(plan) else None
     except Exception:
         return None
 
@@ -829,30 +836,26 @@ def run_one(row, idx, direct_rows, program_rows):
     debug["final_audit"] = current_audit
     debug["final_violation_vector"] = violation_vector(current_audit)
     debug["status"] = "completed"
-    (DEBUG_DIR / f"debug_{idx}.json").write_text(json.dumps(debug, ensure_ascii=False, indent=2), encoding="utf-8")
+    atomic_write_text(DEBUG_DIR / f"debug_{idx}.json", json.dumps(debug, ensure_ascii=False, indent=2), encoding="utf-8")
     return current_plan, debug
 
 
-def select_rows(df):
-    ids_env = os.getenv("IDS")
-    if ids_env:
-        ids = [int(x.strip()) for x in ids_env.split(",") if x.strip()]
-        return df.iloc[[i - 1 for i in ids]]
-    limit = os.getenv("LIMIT")
-    if limit:
-        return df.head(int(limit))
-    return df
-
-
 def main():
-    ensure_dirs()
     df = pd.read_csv(DATA_PATH)
-    df_run = select_rows(df)
+    globals()["DATASET_FINGERPRINT"] = hashlib.sha256(df.to_json().encode()).hexdigest()
+    select_rows(df)  # Validate the request before claiming output paths.
     direct_rows = load_jsonl(DIRECT_SUBMISSION_FILE)
     program_rows = load_jsonl(PROGRAM_SUBMISSION_FILE)
-    if len(direct_rows) < len(df) or len(program_rows) < len(df):
-        raise RuntimeError("Direct/program submission files are incomplete.")
+    if len(direct_rows) != len(df) or len(program_rows) != len(df):
+        raise ValueError("Direct/program seed counts must match the validation dataset.")
+    configure_run(globals())
+    with exclusive_run(OUT_ROOT):
+        _run_dataframe(df, direct_rows, program_rows)
 
+
+def _run_dataframe(df, direct_rows, program_rows):
+    ensure_dirs()
+    df_run = select_rows(df)
     key = f"{MODEL_NAME}_{STRATEGY}_{MODE}_results"
     parsed_key = f"{MODEL_NAME}_{STRATEGY}_{MODE}_parsed_results"
     submission_rows = []
@@ -862,20 +865,32 @@ def main():
         if plan is not None:
             print(f"skipped {number}", flush=True)
         else:
-            plan, _ = run_one(row, number, direct_rows, program_rows)
-            (OUTPUT_DIR / f"generated_plan_{number}.json").write_text(
+            try:
+                plan, _ = run_one(row, number, direct_rows, program_rows)
+            except Exception as exc:
+                plan = []
+                atomic_write_text(DEBUG_DIR / f"debug_{number}.json", json.dumps({"idx":number,"status":"failed","error_type":type(exc).__name__,"error":str(exc)}))
+            atomic_write_text(OUTPUT_DIR / f"generated_plan_{number}.json",
                 json.dumps([{key: render_plan_text(plan), parsed_key: plan}], ensure_ascii=False, indent=2),
                 encoding="utf-8",
             )
             print(f"generated {number}", flush=True)
         submission_rows.append({"idx": number, "query": str(row.get("query", "")), "plan": plan})
 
-    SUBMISSION_FILE.write_text(
+    atomic_write_text(SUBMISSION_FILE,
         "\n".join(json.dumps(item, ensure_ascii=False) for item in submission_rows) + "\n",
         encoding="utf-8",
     )
     print(f"generated {len(submission_rows)} plans into {OUTPUT_DIR}", flush=True)
     print(f"submission saved to {SUBMISSION_FILE}", flush=True)
+    failed = []
+    for row in submission_rows:
+        checkpoint = DEBUG_DIR / f"debug_{row['idx']}.json"
+        if checkpoint.exists() and json.loads(checkpoint.read_text()).get("status") == "failed":
+            failed.append(row['idx'])
+    atomic_write_text(OUT_ROOT / "status.json", json.dumps({"status":"incomplete" if failed else "completed","failed_ids":failed}))
+    if failed:
+        raise SystemExit(f"Failed cases remain in submission: {failed}; inspect debug records and resume")
 
 
 if __name__ == "__main__":

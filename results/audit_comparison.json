@@ -1,0 +1,225 @@
+{
+  "direct": {
+    "n": 180,
+    "versions": {
+      "legacy-v1": {
+        "confusion": {
+          "tp": 36,
+          "fp": 33,
+          "fn": 0,
+          "tn": 111
+        },
+        "metrics": {
+          "precision": 0.5217391304347826,
+          "recall": 1.0,
+          "specificity": 0.7708333333333334,
+          "negative_predictive_value": 1.0,
+          "accuracy": 0.8166666666666667
+        },
+        "audit_likely_pass": 69
+      },
+      "strict-v2": {
+        "confusion": {
+          "tp": 36,
+          "fp": 0,
+          "fn": 0,
+          "tn": 144
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "specificity": 1.0,
+          "negative_predictive_value": 1.0,
+          "accuracy": 1.0
+        },
+        "audit_likely_pass": 36
+      }
+    },
+    "strict_failure_categories": {
+      "restaurant_diversity": 231,
+      "entity_eligibility": 83,
+      "complete_information": 46,
+      "current_city_alignment": 88,
+      "destination_region": 7,
+      "attraction_diversity": 1
+    },
+    "strict_disagreements": []
+  },
+  "verifier_hybrid_agent": {
+    "n": 180,
+    "versions": {
+      "legacy-v1": {
+        "confusion": {
+          "tp": 49,
+          "fp": 32,
+          "fn": 0,
+          "tn": 99
+        },
+        "metrics": {
+          "precision": 0.6049382716049383,
+          "recall": 1.0,
+          "specificity": 0.7557251908396947,
+          "negative_predictive_value": 1.0,
+          "accuracy": 0.8222222222222222
+        },
+        "audit_likely_pass": 81
+      },
+      "strict-v2": {
+        "confusion": {
+          "tp": 49,
+          "fp": 0,
+          "fn": 0,
+          "tn": 131
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "specificity": 1.0,
+          "negative_predictive_value": 1.0,
+          "accuracy": 1.0
+        },
+        "audit_likely_pass": 49
+      }
+    },
+    "strict_failure_categories": {
+      "restaurant_diversity": 151,
+      "entity_eligibility": 31,
+      "complete_information": 54,
+      "current_city_alignment": 13,
+      "destination_region": 1
+    },
+    "strict_disagreements": []
+  },
+  "seeded_repair_probe": {
+    "n": 180,
+    "versions": {
+      "legacy-v1": {
+        "confusion": {
+          "tp": 88,
+          "fp": 44,
+          "fn": 0,
+          "tn": 48
+        },
+        "metrics": {
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "specificity": 0.5217391304347826,
+          "negative_predictive_value": 1.0,
+          "accuracy": 0.7555555555555555
+        },
+        "audit_likely_pass": 132
+      },
+      "strict-v2": {
+        "confusion": {
+          "tp": 88,
+          "fp": 0,
+          "fn": 0,
+          "tn": 92
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "specificity": 1.0,
+          "negative_predictive_value": 1.0,
+          "accuracy": 1.0
+        },
+        "audit_likely_pass": 88
+      }
+    },
+    "strict_failure_categories": {
+      "restaurant_diversity": 95,
+      "entity_eligibility": 12,
+      "complete_information": 90
+    },
+    "strict_disagreements": []
+  },
+  "multi_agent_seeded_r2_n3": {
+    "n": 180,
+    "versions": {
+      "legacy-v1": {
+        "confusion": {
+          "tp": 84,
+          "fp": 49,
+          "fn": 0,
+          "tn": 47
+        },
+        "metrics": {
+          "precision": 0.631578947368421,
+          "recall": 1.0,
+          "specificity": 0.4895833333333333,
+          "negative_predictive_value": 1.0,
+          "accuracy": 0.7277777777777777
+        },
+        "audit_likely_pass": 133
+      },
+      "strict-v2": {
+        "confusion": {
+          "tp": 84,
+          "fp": 0,
+          "fn": 0,
+          "tn": 96
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "specificity": 1.0,
+          "negative_predictive_value": 1.0,
+          "accuracy": 1.0
+        },
+        "audit_likely_pass": 84
+      }
+    },
+    "strict_failure_categories": {
+      "restaurant_diversity": 98,
+      "entity_eligibility": 15,
+      "complete_information": 95,
+      "current_city_alignment": 3
+    },
+    "strict_disagreements": []
+  },
+  "cc_mar_r3": {
+    "n": 180,
+    "versions": {
+      "legacy-v1": {
+        "confusion": {
+          "tp": 63,
+          "fp": 45,
+          "fn": 0,
+          "tn": 72
+        },
+        "metrics": {
+          "precision": 0.5833333333333334,
+          "recall": 1.0,
+          "specificity": 0.6153846153846154,
+          "negative_predictive_value": 1.0,
+          "accuracy": 0.75
+        },
+        "audit_likely_pass": 108
+      },
+      "strict-v2": {
+        "confusion": {
+          "tp": 63,
+          "fp": 0,
+          "fn": 0,
+          "tn": 117
+        },
+        "metrics": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "specificity": 1.0,
+          "negative_predictive_value": 1.0,
+          "accuracy": 1.0
+        },
+        "audit_likely_pass": 63
+      }
+    },
+    "strict_failure_categories": {
+      "restaurant_diversity": 152,
+      "current_city_alignment": 41,
+      "entity_eligibility": 9,
+      "complete_information": 57,
+      "destination_region": 2
+    },
+    "strict_disagreements": []
+  }
+}

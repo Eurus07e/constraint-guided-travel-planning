@@ -8,12 +8,12 @@ import math
 import json
 import re   
 import os
+from utils.paths import DATABASE
 import sys
 from tqdm import tqdm
 import argparse
 
-sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 
 flight = Flights()
 accommodation = Accommodations()
@@ -21,7 +21,7 @@ restaurants = Restaurants()
 googleDistanceMatrix = GoogleDistanceMatrix()
 attractions = Attractions()
 
-city_state_set = open('../database/background/citySet_with_states.txt','r').read().split('\n')
+city_state_set = (DATABASE / 'background/citySet_with_states.txt').read_text().strip().splitlines()
 city_state_map = {x:y for x,y in [unit.split('\t') for unit in city_state_set]}
 
 

@@ -25,26 +25,15 @@ def load_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def load_records(set_type: str) -> list[dict]:
-    if set_type == "validation":
-        import pandas as pd
-
-        return pd.read_csv("database/validation.csv").to_dict("records")
-    cache_paths = sorted(
-        Path.home().glob(
-            f".cache/huggingface/datasets/osunlp___travel_planner/{set_type}/*/*/travel_planner-{set_type}.arrow"
-        )
-    )
-    if cache_paths:
-        dataset = Dataset.from_file(str(cache_paths[-1]))
-    else:
-        dataset = load_dataset("osunlp/TravelPlanner", set_type, download_mode="reuse_cache_if_exists")[set_type]
-    records = [dict(record) for record in dataset]
-    return [recover_evaluator_fields(record) for record in records] if set_type == "test" else records
+def load_records(set_type):
+    from utils.local_data import load_travelplanner_records
+    return load_travelplanner_records(set_type)
 
 
 def repair_rows(submission: list[dict], records: list[dict]) -> tuple[list[dict], list[dict]]:
     import seeded_multi_agent_planner as planner
+    from evaluation.protocol import validate_submission
+    submission = validate_submission(submission, records)
 
     output_rows: list[dict] = []
     debug_rows: list[dict] = []

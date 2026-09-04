@@ -50,3 +50,8 @@ evaluation/*_submission.jsonl
 evaluation/evaluation/
 evaluation/operator_ablations/
 evaluation/experiment_results/
+
+# Reproducible run outputs and local data
+runs/
+database/
+*.egg-info/

@@ -1,0 +1,15 @@
+{
+  "summary": {
+    "n": 180,
+    "delivery_rate": 1.0,
+    "commonsense_macro_rate": 0.5277777777777778,
+    "hard_macro_rate": 0.6888888888888889,
+    "final_pass_rate": 0.4888888888888889,
+    "final_pass_count": 88,
+    "commonsense_micro_rate": 0.9090277777777778,
+    "hard_micro_rate": 0.6571428571428571,
+    "commonsense_micro_total": 1440,
+    "hard_micro_total": 420
+  },
+  "identical_plans": 180
+}
