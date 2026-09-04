@@ -92,7 +92,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", type=Path, default=Path("evaluation/operator_ablations"))
     args = parser.parse_args()
-    rows = pd.read_csv("database/validation.csv")
+    rows = pd.read_csv(planner.DATA_PATH)
     direct = planner.load_jsonl(planner.DIRECT_SUBMISSION_FILE)
     program = planner.load_jsonl(planner.PROGRAM_SUBMISSION_FILE)
     for name, operator_names in CONFIGS.items():

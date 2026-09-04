@@ -33,21 +33,26 @@ All values below are percentages from a local reproduction of the official Trave
 
 | Method | Final Pass | Commonsense Macro | Hard Macro |
 |---|---:|---:|---:|
-| Direct prompt | 20.00 | 20.56 | 57.22 |
-| Generic self-refine | 12.22 | 13.33 | 51.67 |
-| Verifier-guided seed selection | 27.22 | 31.11 | 65.00 |
-| **Verifier-directed repair control** | **48.89** | **52.78** | 68.89 |
-| Seeded multi-agent planner | 46.67 | 49.44 | 67.22 |
-| **CC-MAR** | 35.00 | 38.33 | **72.22** |
+| Direct Prompt | 20.00 | 20.56 | 57.22 |
+| Generic Self-Refine | 12.22 | 13.33 | 51.67 |
+| Verifier-Guided Hybrid Selector | 27.22 | 31.11 | 65.00 |
+| Verifier-Directed Repair Control | 48.89 | 52.78 | 68.89 |
+| Seeded Multi-Agent Planner | 46.67 | 49.44 | 67.22 |
+| CC-MAR | 35.00 | 38.33 | 72.22 |
 
 The complete table, including CC-MAR ablations, is available in [`results/metrics_summary.csv`](results/metrics_summary.csv).
+
+Historical baseline caveat: all 180 checklist records indicate fallback (179 post hoc).
+Self-Refine has 92 failed revision parses and nine failed draft parses. Their stored
+scores are inspectable artifacts, not clean independent strong-baseline evidence.
+See [baseline provenance](results/baseline_provenance.json).
 
 ## What I built
 
 - A deterministic audit layer for route closure, city count, database membership, transportation consistency, accommodation rules, user constraints, and estimated cost.
 - A seeded repair pipeline that ranks heterogeneous drafts, repairs only diagnosed failures, re-audits candidates, and conservatively promotes improvements.
 - CC-MAR, a typed patch protocol with route, entity, lodging, and budget agents; a critic for cross-contract risk; and a deterministic mediator.
-- Resume-safe experiment runners with per-instance caches and debug records for long API experiments.
+- Fingerprinted experiment runners with atomic checkpoints and per-request accounting.
 - Controlled baselines, component ablations, failure analysis, difficulty breakdowns, and reproducible paper artifacts.
 
 ## Method
@@ -87,53 +92,59 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-research.txt
 
-python -m unittest \
-  scripts.test_analyze_verifier_calibration \
-  scripts.test_api_endpoint_helpers \
-  scripts.test_evaluate_submission_subset \
-  scripts.test_repair_operator_ablations \
-  scripts.test_strong_baseline_runner
+python -m unittest discover -s scripts -p 'test_*.py' -v
+python -m scripts.verify_frozen
 ```
 
 These tests exercise parsing, metric summaries, ablation configuration, and API endpoint construction without making model calls.
 
 ## Reproduction
 
-### 1. Obtain the benchmark data
-
-Download the database linked by the [official TravelPlanner repository](https://github.com/OSU-NLP-Group/TravelPlanner#setup-environment) and place its extracted folders under `database/`. The research code expects the original accommodations, attractions, flights, restaurants, distance-matrix, and background files. The validation table used by the local evaluator is `database/validation.csv`.
-
-The full database, raw generations, API caches, and debug logs are intentionally excluded from this repository because they are large and may contain provider-specific traces.
-
-### 2. Configure an OpenAI-compatible model endpoint
+The repository includes 13 frozen validation submissions and per-sample outcomes.
+Start with [the reproduction guide](docs/reproduction.md): it separates offline
+artifact verification, database preparation, exact historical reconstruction,
+and new model experiments. The rebuilt deterministic control matches all 180
+historical plans and reproduces **88/180 Final Pass**.
 
 ```bash
-export OPENAI_API_KEY="your-key"
-export OPENAI_API_BASE="https://your-provider.example/v1"
-export MODEL_NAME="your-model"
+# No database or model calls required:
+python -m scripts.verify_frozen
+
+# After preparing the official database:
+python -m scripts.prepare_data
+python -m scripts.reproduce --limit 3 --output runs/demo.jsonl
+python -m scripts.reproduce --output runs/reproduced_repair.jsonl
+python -m scripts.evaluate_submission_subset --set-type validation \
+  --input runs/reproduced_repair.jsonl --output runs/reproduced_metrics.json
 ```
 
-Never commit `.env` files or credentials. The published experiments used `deepseek-v4-flash`; model behavior and API availability can change, so exact regeneration may differ from the stored results.
+`TP_DATABASE_DIR` selects an existing database. `DIRECT_SUBMISSION_FILE` and
+`PROGRAM_SUBMISSION_FILE` select alternative seeds. The default seeds are the
+published historical Direct and Program predictions, regardless of which model
+is used for new repair calls.
 
-### 3. Run the main methods
+## Reliability update (September 2026)
 
-```bash
-# Strong direct/self-refine baselines
-STRATEGY=constraint_direct_json python strong_baseline_runner.py
-
-# Seeded verifier-repair pipeline
-python seeded_multi_agent_planner.py
-
-# Constraint-contract multi-agent repair
-STRATEGY=cc_mar_r3 python contract_multi_agent_repair.py
-```
-
-Both repair methods consume stored seed submissions. See the paper appendix for exact paths, settings, and the evaluation commands used for the reported table.
+- Full and subset scoring share indexed sample validation and applicable-constraint
+  denominators. All 13 historical rows and their per-sample Final Pass outcomes
+  were reproduced; see [verification results](results/replay_verification.json).
+- `legacy-v1` preserves historical reconstruction. New runs default to `strict-v2`,
+  which checks completeness, city alignment, entity diversity and database
+  eligibility before permitting early stopping. [Audit comparison](results/audit_comparison.json)
+  is development-set calibration, not evidence of held-out generalization.
+- Runs are isolated by configuration, code, data and seed hashes. Checkpoints are
+  atomic, caches include provider and run identity, and requests record usage,
+  latency, retries and cache hits. [Experiment guide](docs/experiments.md).
+- [Paired analysis](results/paired_analysis.json) reports confidence intervals and
+  exact McNemar tests. CC-MAR component contrasts remain exploratory.
+- [Archived Qwen replication](results/replication/archived_summary.json) is reported
+  separately with [provenance limitations](results/replication/archived_provenance.json).
+  New cross-model batches are [pending valid API credentials](results/replication/new_runs_status.json).
 
 ## Scope and limitations
 
 - The main course-paper comparisons are single stored runs on one benchmark validation split; they should not be read as universal architectural rankings.
-- The internal audit is deliberately conservative and is not identical to the official scorer.
+- The versioned internal audit is independent of the final scorer; its calibration is measured separately.
 - A benchmark-valid itinerary is not real-world travel advice. Live availability, safety, visas, accessibility, and disruptions are outside the benchmark.
 - CC-MAR improves hard-constraint coverage, but its current specialist decomposition is not reliably better than simpler repair policies.
 

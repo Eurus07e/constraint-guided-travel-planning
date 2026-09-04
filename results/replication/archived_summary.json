@@ -1,0 +1,25 @@
+{
+  "scope": "Three archived runs on the same 997 test queries with recovered constraints, not new executions or private-label official test scores.",
+  "runs": 3,
+  "n_per_run": 997,
+  "methods": {
+    "direct": {
+      "final_pass_percentages": [
+        9.729187562688065,
+        10.330992978936811,
+        9.829488465396189
+      ],
+      "mean_percentage": 9.963223002340355,
+      "sample_standard_deviation_percentage": 0.3224222922431614
+    },
+    "repaired": {
+      "final_pass_percentages": [
+        29.689067201604814,
+        29.187562688064194,
+        28.68605817452357
+      ],
+      "mean_percentage": 29.187562688064194,
+      "sample_standard_deviation_percentage": 0.5015045135406222
+    }
+  }
+}

@@ -1,10 +1,11 @@
 import pandas as pd
+from utils.paths import DATABASE
 from pandas import DataFrame
 from typing import Optional
 from utils.func import extract_before_parenthesis
 
 class Restaurants:
-    def __init__(self, path="../database/restaurants/clean_restaurant_2022.csv"):
+    def __init__(self, path=DATABASE / "restaurants/clean_restaurant_2022.csv"):
         self.path = path
         self.data = pd.read_csv(self.path).dropna()[['Name','Average Cost','Cuisines','Aggregate Rating','City']]
         print("Restaurants loaded.")

@@ -9,6 +9,9 @@ import urllib.request
 from pathlib import Path
 
 import pandas as pd
+from utils.llm_client import complete
+from utils.run_state import configure_run, atomic_write_text
+from utils.paths import DATABASE, seed_path
 
 from utils.plan_audit import (
     _check_local_constraints,
@@ -28,12 +31,12 @@ CANDIDATES = int(os.getenv("CANDIDATES", "3"))
 STRATEGY = os.getenv("STRATEGY", f"multi_agent_seeded_r{ROUNDS}_n{CANDIDATES}")
 MODE = "sole-planning"
 
-DATA_PATH = Path("database/validation.csv")
+DATA_PATH = DATABASE / "validation.csv"
 
 DIRECT_OUTPUT_DIR = Path("outputs/validation")
 PROGRAM_OUTPUT_DIR = Path("outputs_program_v23_best/validation")
-DIRECT_SUBMISSION_FILE = Path("evaluation/validation_deepseek-v4-flash_direct_sole-planning_submission.jsonl")
-PROGRAM_SUBMISSION_FILE = Path("evaluation/validation_deepseek-v4-flash_program_v23_best_sole-planning_submission.jsonl")
+DIRECT_SUBMISSION_FILE = seed_path("direct")
+PROGRAM_SUBMISSION_FILE = seed_path("program")
 
 OUT_ROOT = Path(os.getenv("OUT_ROOT", f"outputs_{STRATEGY}"))
 OUTPUT_DIR = OUT_ROOT / "validation"
@@ -89,7 +92,11 @@ def load_jsonl(path):
     path = Path(path)
     if not path.exists():
         return []
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    ids = [row.get("idx") for row in rows]
+    if any(type(idx) is not int for idx in ids) or sorted(ids) != list(range(1, len(rows)+1)):
+        raise ValueError(f"Seed submission must contain unique contiguous one-based IDs: {path}")
+    return sorted(rows, key=lambda row: row["idx"])
 
 
 def parse_any_json(text):
@@ -121,56 +128,8 @@ def chat_completions_url(api_base):
 
 
 def call_deepseek_text(system_prompt, user_prompt, max_tokens=4096, temperature=0.0, cache_tag="default"):
-    api_key = os.getenv("OPENAI_API_KEY", "")
-    api_base = os.getenv("OPENAI_API_BASE", "https://api.deepseek.com").rstrip("/")
-    model_name = os.getenv("MODEL_NAME", MODEL_NAME)
-
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not set")
-
-    payload = {
-        "model": model_name,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    }
-
-    cache_key = hashlib.sha256(
-        json.dumps({"tag": cache_tag, "payload": payload}, sort_keys=True, ensure_ascii=False).encode("utf-8")
-    ).hexdigest()
-    cache_path = CACHE_DIR / f"{cache_key}.txt"
-    if cache_path.exists():
-        return cache_path.read_text(encoding="utf-8")
-
-    req = urllib.request.Request(
-        chat_completions_url(api_base),
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + api_key,
-            "Connection": "close",
-        },
-        method="POST",
-    )
-
-    last_err = None
-    for attempt in range(MAX_RETRIES):
-        try:
-            with urllib.request.urlopen(req, timeout=180) as resp:
-                raw = resp.read().decode("utf-8")
-                obj = json.loads(raw)
-                message = obj["choices"][0]["message"]
-                content = message.get("content") or message.get("reasoning_content") or ""
-                cache_path.write_text(content, encoding="utf-8")
-                return content
-        except Exception as exc:
-            last_err = exc
-            time.sleep(min(40, 3 + attempt * 5))
-
-    raise RuntimeError(f"DeepSeek API failed: {last_err}")
+    return complete(system_prompt, user_prompt, cache_dir=CACHE_DIR, model=MODEL_NAME,
+                    max_tokens=max_tokens, temperature=temperature, cache_tag=cache_tag, json_mode=False)
 
 
 def call_deepseek_json(system_prompt, user_prompt, max_tokens=4096, temperature=0.0, cache_tag="default"):
@@ -1035,7 +994,7 @@ def selector_prompt(task, candidates):
 
 
 def save_debug(debug_state, idx):
-    (DEBUG_DIR / f"debug_{idx}.json").write_text(
+    atomic_write_text(DEBUG_DIR / f"debug_{idx}.json",
         json.dumps(debug_state, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
@@ -1358,7 +1317,12 @@ def run_one(row, idx, direct_submission_rows, program_submission_rows):
     existing_debug = load_debug(idx)
     output_path = OUTPUT_DIR / f"generated_plan_{idx}.json"
     if RESUME and existing_debug and existing_debug.get("status") == "completed" and output_path.exists():
-        return None, None, existing_debug, True
+        try:
+            saved = json.loads(output_path.read_text())[0]
+            if isinstance(saved.get(f"{MODEL_NAME}_{STRATEGY}_{MODE}_parsed_results"), list):
+                return None, None, existing_debug, True
+        except (ValueError, IndexError, KeyError, TypeError):
+            pass
 
     debug_state = {
         "idx": idx,
@@ -1512,8 +1476,10 @@ def run_one(row, idx, direct_submission_rows, program_submission_rows):
 
 
 def main():
-    ensure_dirs()
     df = pd.read_csv(DATA_PATH)
+    globals()["DATASET_FINGERPRINT"] = hashlib.sha256(df.to_json().encode()).hexdigest()
+    configure_run(globals())
+    ensure_dirs()
 
     ids_env = os.getenv("IDS")
     if ids_env:
@@ -1538,7 +1504,12 @@ def main():
 
     for idx, row in df_run.iterrows():
         number = idx + 1
-        text, plan, payload, skipped = run_one(row, number, direct_submission_rows, program_submission_rows)
+        try:
+            text, plan, payload, skipped = run_one(row, number, direct_submission_rows, program_submission_rows)
+        except Exception as exc:
+            text, plan, skipped = "", [], False
+            payload = {"idx":number,"status":"failed","error_type":type(exc).__name__,"error":str(exc),"final_choice":None}
+            save_debug(payload, number)
         debug_payload = payload if payload else load_debug(number)
         if skipped:
             existing = json.loads((OUTPUT_DIR / f"generated_plan_{number}.json").read_text(encoding="utf-8"))[0]
@@ -1553,7 +1524,7 @@ def main():
             continue
 
         out_path = OUTPUT_DIR / f"generated_plan_{number}.json"
-        out_path.write_text(
+        atomic_write_text(out_path,
             json.dumps(
                 [
                     {
@@ -1576,12 +1547,20 @@ def main():
         )
         print(f"generated {number}", flush=True)
 
-    SUBMISSION_FILE.write_text(
+    atomic_write_text(SUBMISSION_FILE,
         "\n".join(json.dumps(item, ensure_ascii=False) for item in submission_rows) + "\n",
         encoding="utf-8",
     )
     print(f"generated {len(submission_rows)} plans into {OUTPUT_DIR}", flush=True)
     print(f"submission saved to {SUBMISSION_FILE}", flush=True)
+    failed = []
+    for row in submission_rows:
+        checkpoint = DEBUG_DIR / f"debug_{row['idx']}.json"
+        if checkpoint.exists() and json.loads(checkpoint.read_text()).get("status") == "failed":
+            failed.append(row['idx'])
+    atomic_write_text(OUT_ROOT / "status.json", json.dumps({"status":"incomplete" if failed else "completed","failed_ids":failed}))
+    if failed:
+        raise SystemExit(f"Failed cases remain in submission: {failed}; inspect debug records and resume")
 
 
 if __name__ == "__main__":

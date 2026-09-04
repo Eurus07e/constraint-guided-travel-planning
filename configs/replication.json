@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "repeats": 3,
+  "set_type": "validation",
+  "workers": 4,
+  "audit_version": "strict-v2",
+  "methods": ["direct", "selector", "deterministic", "self_refine", "cc_mar", "seeded"],
+  "max_plan_tokens": 4096,
+  "max_requests_per_method": 5,
+  "cc_mar_rounds": 1,
+  "seeded_rounds": 2,
+  "seeded_candidates": 3,
+  "reference_chars": 14000,
+  "source_seed_policy": "Fresh Direct seed shared within each case and repeat; fixed historical Program seed shared across all comparisons."
+}

@@ -1,24 +1,15 @@
 \begin{tabular}{@{}lrrrrr@{}}
 \toprule
-Method & Final Pass (\%) $\uparrow$ & Common.\ Macro (\%) $\uparrow$ & Hard Macro (\%) $\uparrow$ & Common.\ Micro (\%) $\uparrow$ & Hard Micro (\%) $\uparrow$ \\
+Method & Final Pass (\%) & Common. Macro (\%) & Hard Macro (\%) & Common. Micro (\%) & Hard Micro (\%) \\
 \midrule
-\multicolumn{6}{@{}l}{\textit{Prompt-only and program baselines}} \\
 Direct Prompt & 20.00 & 20.56 & 57.22 & 80.62 & 60.95 \\
+Constraint-Checklist Direct$^{\dagger}$ & 20.00 & 20.56 & 57.22 & 77.43 & 60.95 \\
+Generic Self-Refine$^{\dagger}$ & 12.22 & 13.33 & 51.67 & 74.17 & 57.62 \\
 Program Planner v1 & 8.89 & 21.11 & 16.67 & 71.67 & 24.05 \\
 LLM-Assisted Program Planner & 12.22 & 18.33 & 42.78 & 82.15 & 35.48 \\
-\midrule
-\multicolumn{6}{@{}l}{\textit{Stronger prompting baselines}} \\
-Constraint-Checklist Direct & 20.00 & 20.56 & 57.22 & 77.43 & 60.95 \\
-Generic Self-Refine & 12.22 & 13.33 & 51.67 & 74.17 & 57.62 \\
-\midrule
-\multicolumn{6}{@{}l}{\textit{Verifier and repair controls}} \\
 Verifier-Guided Hybrid Selector & 27.22 & 31.11 & 65.00 & 87.22 & 63.81 \\
 Verifier-Directed Repair Control & \textbf{48.89} & \textbf{52.78} & \underline{68.89} & \textbf{90.90} & \underline{65.71} \\
-\midrule
-\multicolumn{6}{@{}l}{\textit{Seeded pipeline}} \\
 Seeded Multi-Agent Planner & \underline{46.67} & \underline{49.44} & 67.22 & \underline{90.07} & 61.67 \\
-\midrule
-\multicolumn{6}{@{}l}{\textit{Contract multi-agent repair}} \\
 CC-MAR & 35.00 & 38.33 & \textbf{72.22} & 88.26 & \textbf{71.19} \\
 \bottomrule
 \end{tabular}

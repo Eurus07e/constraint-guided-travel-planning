@@ -1,0 +1,213 @@
+{
+  "protocol": "travelplanner-local-v1-indexed",
+  "methods": {
+    "direct": {
+      "summary": {
+        "n": 180,
+        "delivery_rate": 1.0,
+        "commonsense_macro_rate": 0.20555555555555555,
+        "hard_macro_rate": 0.5722222222222222,
+        "final_pass_rate": 0.2,
+        "final_pass_count": 36,
+        "commonsense_micro_rate": 0.80625,
+        "hard_micro_rate": 0.6095238095238096,
+        "commonsense_micro_total": 1440,
+        "hard_micro_total": 420
+      },
+      "discrepancies": {},
+      "changed_final_pass_ids": []
+    },
+    "constraint_direct_json": {
+      "summary": {
+        "n": 180,
+        "delivery_rate": 0.95,
+        "commonsense_macro_rate": 0.20555555555555555,
+        "hard_macro_rate": 0.5722222222222222,
+        "final_pass_rate": 0.2,
+        "final_pass_count": 36,
+        "commonsense_micro_rate": 0.7743055555555556,
+        "hard_micro_rate": 0.6095238095238096,
+        "commonsense_micro_total": 1440,
+        "hard_micro_total": 420
+      },
+      "discrepancies": {},
+      "changed_final_pass_ids": []
+    },
+    "generic_self_refine_r1": {
+      "summary": {
+        "n": 180,
+        "delivery_rate": 0.95,
+        "commonsense_macro_rate": 0.13333333333333333,
+        "hard_macro_rate": 0.5166666666666667,
+        "final_pass_rate": 0.12222222222222222,
+        "final_pass_count": 22,
+        "commonsense_micro_rate": 0.7416666666666667,
+        "hard_micro_rate": 0.5761904761904761,
+        "commonsense_micro_total": 1440,
+        "hard_micro_total": 420
+      },
+      "discrepancies": {},
+      "changed_final_pass_ids": []
+    },
+    "program_v1": {
+      "summary": {
+        "n": 180,
+        "delivery_rate": 1.0,
+        "commonsense_macro_rate": 0.2111111111111111,
+        "hard_macro_rate": 0.16666666666666666,
+        "final_pass_rate": 0.08888888888888889,
+        "final_pass_count": 16,
+        "commonsense_micro_rate": 0.7166666666666667,
+        "hard_micro_rate": 0.24047619047619048,
+        "commonsense_micro_total": 1440,
+        "hard_micro_total": 420
+      },
+      "discrepancies": {},
+      "changed_final_pass_ids": []
+    },
+    "program_v23_best": {
+      "summary": {
+        "n": 180,
+        "delivery_rate": 1.0,
+        "commonsense_macro_rate": 0.18333333333333332,
+        "hard_macro_rate": 0.42777777777777776,
+        "final_pass_rate": 0.12222222222222222,
+        "final_pass_count": 22,
+        "commonsense_micro_rate": 0.8215277777777777,
+        "hard_micro_rate": 0.3547619047619048,
+        "commonsense_micro_total": 1440,
+        "hard_micro_total": 420
+      },
+      "discrepancies": {},
+      "changed_final_pass_ids": []
+    },
+    "verifier_hybrid_agent": {
+      "summary": {
+        "n": 180,
+        "delivery_rate": 1.0,
+        "commonsense_macro_rate": 0.3111111111111111,
+        "hard_macro_rate": 0.65,
+        "final_pass_rate": 0.2722222222222222,
+        "final_pass_count": 49,
+        "commonsense_micro_rate": 0.8722222222222222,
+        "hard_micro_rate": 0.638095238095238,
+        "commonsense_micro_total": 1440,
+        "hard_micro_total": 420
+      },
+      "discrepancies": {},
+      "changed_final_pass_ids": []
+    },
+    "seeded_repair_probe": {
+      "summary": {
+        "n": 180,
+        "delivery_rate": 1.0,
+        "commonsense_macro_rate": 0.5277777777777778,
+        "hard_macro_rate": 0.6888888888888889,
+        "final_pass_rate": 0.4888888888888889,
+        "final_pass_count": 88,
+        "commonsense_micro_rate": 0.9090277777777778,
+        "hard_micro_rate": 0.6571428571428571,
+        "commonsense_micro_total": 1440,
+        "hard_micro_total": 420
+      },
+      "discrepancies": {},
+      "changed_final_pass_ids": []
+    },
+    "multi_agent_seeded_r2_n3": {
+      "summary": {
+        "n": 180,
+        "delivery_rate": 1.0,
+        "commonsense_macro_rate": 0.49444444444444446,
+        "hard_macro_rate": 0.6722222222222223,
+        "final_pass_rate": 0.4666666666666667,
+        "final_pass_count": 84,
+        "commonsense_micro_rate": 0.9006944444444445,
+        "hard_micro_rate": 0.6166666666666667,
+        "commonsense_micro_total": 1440,
+        "hard_micro_total": 420
+      },
+      "discrepancies": {},
+      "changed_final_pass_ids": []
+    },
+    "cc_mar_r3": {
+      "summary": {
+        "n": 180,
+        "delivery_rate": 1.0,
+        "commonsense_macro_rate": 0.38333333333333336,
+        "hard_macro_rate": 0.7222222222222222,
+        "final_pass_rate": 0.35,
+        "final_pass_count": 63,
+        "commonsense_micro_rate": 0.8826388888888889,
+        "hard_micro_rate": 0.7119047619047619,
+        "commonsense_micro_total": 1440,
+        "hard_micro_total": 420
+      },
+      "discrepancies": {},
+      "changed_final_pass_ids": []
+    },
+    "cc_mar_no_critic": {
+      "summary": {
+        "n": 180,
+        "delivery_rate": 1.0,
+        "commonsense_macro_rate": 0.37222222222222223,
+        "hard_macro_rate": 0.7166666666666667,
+        "final_pass_rate": 0.3388888888888889,
+        "final_pass_count": 61,
+        "commonsense_micro_rate": 0.8826388888888889,
+        "hard_micro_rate": 0.6952380952380952,
+        "commonsense_micro_total": 1440,
+        "hard_micro_total": 420
+      },
+      "discrepancies": {},
+      "changed_final_pass_ids": []
+    },
+    "cc_mar_no_board": {
+      "summary": {
+        "n": 180,
+        "delivery_rate": 1.0,
+        "commonsense_macro_rate": 0.39444444444444443,
+        "hard_macro_rate": 0.7,
+        "final_pass_rate": 0.34444444444444444,
+        "final_pass_count": 62,
+        "commonsense_micro_rate": 0.8819444444444444,
+        "hard_micro_rate": 0.6952380952380952,
+        "commonsense_micro_total": 1440,
+        "hard_micro_total": 420
+      },
+      "discrepancies": {},
+      "changed_final_pass_ids": []
+    },
+    "cc_mar_no_specialization": {
+      "summary": {
+        "n": 180,
+        "delivery_rate": 1.0,
+        "commonsense_macro_rate": 0.40555555555555556,
+        "hard_macro_rate": 0.7111111111111111,
+        "final_pass_rate": 0.3611111111111111,
+        "final_pass_count": 65,
+        "commonsense_micro_rate": 0.8840277777777777,
+        "hard_micro_rate": 0.7047619047619048,
+        "commonsense_micro_total": 1440,
+        "hard_micro_total": 420
+      },
+      "discrepancies": {},
+      "changed_final_pass_ids": []
+    },
+    "single_generic_repair_agent": {
+      "summary": {
+        "n": 180,
+        "delivery_rate": 1.0,
+        "commonsense_macro_rate": 0.37777777777777777,
+        "hard_macro_rate": 0.7111111111111111,
+        "final_pass_rate": 0.3388888888888889,
+        "final_pass_count": 61,
+        "commonsense_micro_rate": 0.8784722222222222,
+        "hard_micro_rate": 0.7047619047619048,
+        "commonsense_micro_total": 1440,
+        "hard_micro_total": 420
+      },
+      "discrepancies": {},
+      "changed_final_pass_ids": []
+    }
+  }
+}

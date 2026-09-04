@@ -7,6 +7,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import pandas as pd
+from utils.paths import DATABASE
+from utils.llm_client import complete
+from utils.run_state import configure_run, atomic_write_text
 import requests
 
 
@@ -25,7 +28,7 @@ OUTPUT_DIR = OUT_ROOT / SET_TYPE
 DEBUG_DIR = OUT_ROOT / f"debug_{SET_TYPE}"
 CACHE_DIR = OUT_ROOT / f"llm_cache_{SET_TYPE}"
 SUBMISSION_FILE = submission_file_path(SET_TYPE, MODEL_NAME, STRATEGY, MODE)
-CONSTRAINT_DIRECT_OUTPUT_DIR = Path("outputs_strong_baselines") / "constraint_direct_json" / SET_TYPE
+CONSTRAINT_DIRECT_OUTPUT_DIR = Path(os.getenv("CONSTRAINT_DIRECT_OUTPUT_DIR", "outputs_strong_baselines/constraint_direct_json")) / SET_TYPE
 DIRECT_SUBMISSION_FILE = Path("evaluation") / f"{SET_TYPE}_{MODEL_NAME}_constraint_direct_json_{MODE}_submission.jsonl"
 PROMPT_VERSION = "strong_baseline_v2_json_schema"
 
@@ -196,65 +199,8 @@ def chat_completions_url(api_base):
 
 
 def call_llm(system_prompt, user_prompt, max_tokens=4096, temperature=0.0, cache_tag="default"):
-    api_key = os.getenv("OPENAI_API_KEY", "")
-    api_base = os.getenv("OPENAI_API_BASE", "https://api.deepseek.com").rstrip("/")
-    model_name = os.getenv("MODEL_NAME", MODEL_NAME)
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not set")
-
-    payload = {
-        "model": model_name,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        "response_format": {"type": "json_object"},
-    }
-    if "dashscope.aliyuncs.com" in api_base:
-        payload["enable_thinking"] = os.getenv("ENABLE_THINKING", "0") == "1"
-    cache_key = hashlib.sha256(
-        json.dumps({"version": PROMPT_VERSION, "strategy": STRATEGY, "tag": cache_tag, "payload": payload}, sort_keys=True, ensure_ascii=False).encode("utf-8")
-    ).hexdigest()
-    cache_path = CACHE_DIR / f"{cache_key}.txt"
-    if cache_path.exists():
-        return cache_path.read_text(encoding="utf-8")
-
-    url = chat_completions_url(api_base)
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + api_key,
-        "Connection": "close",
-    }
-    last_err = None
-    for attempt in range(MAX_RETRIES):
-        try:
-            started_at = time.time()
-            response = requests.post(url, headers=headers, json=payload, timeout=REQUEST_TIMEOUT)
-            response.raise_for_status()
-            obj = response.json()
-            message = obj["choices"][0]["message"]
-            content = message.get("content") or message.get("reasoning_content") or ""
-            cache_path.write_text(content, encoding="utf-8")
-            cache_path.with_suffix(".meta.json").write_text(
-                json.dumps(
-                    {
-                        "model": obj.get("model", model_name),
-                        "usage": obj.get("usage"),
-                        "latency_seconds": time.time() - started_at,
-                        "attempt": attempt + 1,
-                    },
-                    ensure_ascii=False,
-                    indent=2,
-                ),
-                encoding="utf-8",
-            )
-            return content
-        except Exception as exc:
-            last_err = exc
-            time.sleep(min(45, 4 + attempt * 6))
-    raise RuntimeError(f"LLM call failed after retries: {last_err}")
+    return complete(system_prompt, user_prompt, cache_dir=CACHE_DIR, model=MODEL_NAME,
+                    max_tokens=max_tokens, temperature=temperature, cache_tag=cache_tag, json_mode=True)
 
 
 def direct_prompt(task):
@@ -375,12 +321,7 @@ def run_direct(task, idx):
     raw = call_llm(sp, up, max_tokens=MAX_PLAN_TOKENS, temperature=0.1, cache_tag=f"direct_{idx}")
     parsed = parse_json_payload(raw)
     plan = normalize_plan_list(parsed, int(task["days"]))
-    fallback = None
-    if schema_quality_bad(plan):
-        fallback_plan = load_direct_baseline_plan(idx)
-        if fallback_plan:
-            plan = fallback_plan
-            fallback = "direct_prompt_schema_fallback"
+    fallback = "schema_quality_warning" if schema_quality_bad(plan) else None
     return {
         "plan": plan,
         "raw": raw,
@@ -460,10 +401,14 @@ def run_self_refine(task, idx):
 
 
 def load_constraint_direct_draft(idx):
+    if not os.getenv("CONSTRAINT_DIRECT_OUTPUT_DIR"):
+        return None
     output_path = CONSTRAINT_DIRECT_OUTPUT_DIR / f"generated_plan_{idx}.json"
     if not output_path.exists():
         return None
     try:
+        if json.loads(debug_path.read_text()).get("status") != "completed":
+            return None
         payload = json.loads(output_path.read_text(encoding="utf-8"))[0]
         plan = payload.get(f"{MODEL_NAME}_constraint_direct_json_{MODE}_parsed_results")
     except Exception:
@@ -494,7 +439,7 @@ def run_one(row, idx):
         "result": result,
         "status": "completed",
     }
-    (DEBUG_DIR / f"debug_{idx}.json").write_text(json.dumps(debug, ensure_ascii=False, indent=2), encoding="utf-8")
+    atomic_write_text(DEBUG_DIR / f"debug_{idx}.json", json.dumps(debug, ensure_ascii=False, indent=2), encoding="utf-8")
     return result["plan"], debug
 
 
@@ -515,7 +460,7 @@ def select_rows(df):
 
 def load_records_dataframe():
     if SET_TYPE == "validation":
-        return pd.read_csv(Path("database/validation.csv"))
+        return pd.read_csv(DATABASE / "validation.csv")
     if SET_TYPE not in {"train", "test"}:
         raise ValueError(f"Unsupported SET_TYPE: {SET_TYPE}")
     from datasets import load_dataset
@@ -532,6 +477,8 @@ def load_existing_plan(idx):
     if not (output_path.exists() and debug_path.exists()):
         return None
     try:
+        if json.loads(debug_path.read_text()).get("status") != "completed":
+            return None
         payload = json.loads(output_path.read_text(encoding="utf-8"))[0]
         return payload.get(f"{MODEL_NAME}_{STRATEGY}_{MODE}_parsed_results")
     except Exception:
@@ -539,8 +486,10 @@ def load_existing_plan(idx):
 
 
 def main():
-    ensure_dirs()
     df = load_records_dataframe()
+    globals()["DATASET_FINGERPRINT"] = hashlib.sha256(df.to_json().encode()).hexdigest()
+    configure_run(globals())
+    ensure_dirs()
     df_run = select_rows(df)
     key = f"{MODEL_NAME}_{STRATEGY}_{MODE}_results"
     parsed_key = f"{MODEL_NAME}_{STRATEGY}_{MODE}_parsed_results"
@@ -553,9 +502,13 @@ def main():
         if plan is not None:
             print(f"skipped {number}", flush=True)
         else:
-            plan, _ = run_one(row, number)
+            try:
+                plan, _ = run_one(row, number)
+            except Exception as exc:
+                plan = []
+                atomic_write_text(DEBUG_DIR / f"debug_{number}.json", json.dumps({"idx":number,"status":"failed","error_type":type(exc).__name__,"error":str(exc)}))
             output_path = OUTPUT_DIR / f"generated_plan_{number}.json"
-            output_path.write_text(
+            atomic_write_text(output_path,
                 json.dumps([{key: render_plan_text(plan), parsed_key: plan}], ensure_ascii=False, indent=2),
                 encoding="utf-8",
             )
@@ -571,12 +524,20 @@ def main():
             submission_rows = [future.result() for future in as_completed(futures)]
         submission_rows.sort(key=lambda item: item["idx"])
 
-    SUBMISSION_FILE.write_text(
+    atomic_write_text(SUBMISSION_FILE,
         "\n".join(json.dumps(item, ensure_ascii=False) for item in submission_rows) + "\n",
         encoding="utf-8",
     )
     print(f"generated {len(submission_rows)} plans into {OUTPUT_DIR}", flush=True)
     print(f"submission saved to {SUBMISSION_FILE}", flush=True)
+    failed = []
+    for row in submission_rows:
+        checkpoint = DEBUG_DIR / f"debug_{row['idx']}.json"
+        if checkpoint.exists() and json.loads(checkpoint.read_text()).get("status") == "failed":
+            failed.append(row['idx'])
+    atomic_write_text(OUT_ROOT / "status.json", json.dumps({"status":"incomplete" if failed else "completed","failed_ids":failed}))
+    if failed:
+        raise SystemExit(f"Failed cases remain in submission: {failed}; inspect debug records and resume")
 
 
 if __name__ == "__main__":

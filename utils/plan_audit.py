@@ -7,7 +7,8 @@ import pandas as pd
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-DB_DIR = ROOT_DIR / "database"
+from utils.paths import DATABASE
+DB_DIR = DATABASE
 
 
 def extract_before_parenthesis(value):
@@ -557,3 +558,116 @@ def audit_plan(task, plan):
         "visited_non_origin_cities": visited_non_origin,
         "transport_modes": sorted(transport_modes),
     }
+
+
+# Preserve the published selector/repair behavior for exact historical replay.
+audit_plan_legacy = audit_plan
+
+
+def strict_issues(task, plan):
+    """Independent preflight checks; this function never calls the final scorer."""
+    issues = []
+    def add(contract, message):
+        issues.append({'contract': contract, 'issue': message})
+    expected = int(task.get('days', 0))
+    fields = {'current_city','transportation','breakfast','lunch','dinner','attraction','accommodation'}
+    if len(plan) != expected:
+        add('complete_information', 'plan day count differs from task')
+    seen_meals = set(); seen_attractions = set()
+    for i, day in enumerate(plan, 1):
+        if not isinstance(day, dict) or not fields.issubset(day):
+            add('complete_information', f'day {i}: missing required fields')
+            continue
+        if day.get('days', day.get('day')) != i:
+            add('complete_information', f'day {i}: invalid day index')
+        current = str(day.get('current_city') or '').strip()
+        targets = _current_city_targets(current)
+        travel = 'from ' in current.lower() or ' to ' in current.lower()
+        if not current or current == '-':
+            add('complete_information', f'day {i}: missing current city')
+        missing = lambda key: not str(day.get(key) or '').strip() or str(day.get(key)).strip() == '-'
+        if travel and missing('transportation'):
+            add('complete_information', f'day {i}: missing transportation')
+        if not travel:
+            for key in ['breakfast','lunch','dinner','attraction']:
+                if missing(key): add('complete_information', f'day {i}: missing {key}')
+        if i < expected and missing('accommodation'):
+            add('complete_information', f'day {i}: missing accommodation')
+        transport = str(day.get('transportation') or '')
+        restriction = (task.get('local_constraint') or {}).get('transportation')
+        if restriction == 'no flight' and transportation_mode(transport) == 'flight':
+            add('local_transportation', f'day {i}: flight prohibited')
+        if restriction == 'no self-driving' and transportation_mode(transport) == 'self-driving':
+            add('local_transportation', f'day {i}: self-driving prohibited')
+        if not missing('transportation'):
+            origin,dest = extract_from_to(transport)
+            if not origin or not dest or any(t not in (origin,dest) for t in targets):
+                add('current_city_alignment', f'day {i}: transportation city mismatch')
+        for key in ['breakfast','lunch','dinner','accommodation']:
+            if missing(key): continue
+            value = str(day[key]); _,city = get_valid_name_city(value)
+            allowed = targets[-1:] if key=='accommodation' else targets
+            if not allowed or city.casefold() not in {c.casefold() for c in allowed}:
+                add('current_city_alignment', f'day {i}: {key} city mismatch')
+            if key!='accommodation':
+                identity=value.casefold().strip()
+                if identity in seen_meals:add('restaurant_diversity', f'day {i}: repeated {key}')
+                seen_meals.add(identity)
+        for value in split_attractions(day.get('attraction')):
+            _,city=get_valid_name_city(value)
+            if city.casefold() not in {c.casefold() for c in targets}:
+                add('current_city_alignment', f'day {i}: attraction city mismatch')
+            identity=value.casefold().strip()
+            if identity in seen_attractions:add('attraction_diversity', f'day {i}: repeated attraction')
+            seen_attractions.add(identity)
+    return issues
+
+
+
+@lru_cache(maxsize=20000)
+def strict_entity_eligible(value, kind):
+    lookup, name_col, city_col = {
+        'restaurant': (_lookup_restaurant, 'Name', 'City'),
+        'accommodation': (_lookup_accommodation, 'NAME', 'city'),
+        'attraction': (_lookup_attraction, 'Name', 'City'),
+    }[kind]
+    name, city = get_valid_name_city(value)
+    rows = lookup(value).dropna()
+    if rows.empty:
+        return False
+    return bool(((rows[city_col] == city) & rows[name_col].astype(str).str.contains(re.escape(name))).any())
+
+
+def audit_plan(task, plan, version=None):
+    import os
+    version = version or task.get('_audit_version') or os.getenv('TP_AUDIT_VERSION', 'strict-v2')
+    if version not in {'legacy-v1','strict-v2'}:
+        raise ValueError(f'Unknown audit version: {version}')
+    result = audit_plan_legacy(task, plan)
+    result['audit_version'] = version
+    if version == 'legacy-v1':
+        return result
+    findings = strict_issues(task, plan)
+    if int(task.get('days', 0)) > 3:
+        mapping = _load_city_state_map()
+        for city in _city_trace(plan)[1:-1]:
+            if mapping.get(city) != task.get('dest'):
+                findings.append({'contract':'destination_region','issue':f'{city} outside requested region'})
+    # The released tools discard rows missing any database column. Keep that
+    # eligibility boundary while retaining legacy-v1's historical lookups.
+    for i, day in enumerate(plan, 1):
+        for field, kind in [('breakfast','restaurant'),('lunch','restaurant'),('dinner','restaurant'),('accommodation','accommodation')]:
+            value = str(day.get(field) or '').strip()
+            if value and value != '-' and not strict_entity_eligible(value, kind):
+                findings.append({'contract':'entity_eligibility','issue':f'day {i}: {field} not a case-sensitive eligible database match'})
+        for value in split_attractions(day.get('attraction')):
+            if not strict_entity_eligible(value, 'attraction'):
+                findings.append({'contract':'entity_eligibility','issue':f'day {i}: attraction not a case-sensitive eligible database match'})
+    contracts = ('complete_information','current_city_alignment','restaurant_diversity','attraction_diversity','local_transportation','destination_region','entity_eligibility')
+    result['strict_checks'] = {name:not any(i['contract']==name for i in findings) for name in contracts}
+    result['strict_issues'] = findings
+    result['fatal_count'] += len(findings)
+    result['fatal_issues'] = result['fatal_issues'] + [f"{i['contract']}: {i['issue']}" for i in findings]
+    result['score'] = max(0, result['score'] - 8 * len(findings))
+    result['likely_pass'] = result['likely_pass'] and not findings
+    return result

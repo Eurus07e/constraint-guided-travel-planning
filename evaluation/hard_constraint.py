@@ -9,12 +9,12 @@ import json
 import re
 import numpy as np
 import os
+from utils.paths import DATABASE
 import sys
 from tqdm import tqdm
 import argparse
 
-sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 
 
 flight = Flights()

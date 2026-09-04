@@ -1,0 +1,122 @@
+{
+  "scope": "Archived July 2026 Qwen test runs, not new September executions. Query-derived constraints are a proxy for private test annotations.",
+  "runs": [
+    {
+      "run": 1,
+      "model": "qwen3.5-plus",
+      "artifacts": {
+        "direct": {
+          "prediction_sha256": "30c108f648f57e0f80387c333d0ccd0f99a90ca9cdfb029dc478e26629910362",
+          "metrics_sha256": "5cfee9a58d656d176cb8bc77b2056446a417bb650620be02d8e897f81c536845"
+        },
+        "repaired": {
+          "prediction_sha256": "15f162928ec4af3fbf4bc22b95fe08887d65506baacecf8f2809132ae64ec7b4",
+          "metrics_sha256": "be6522003e450b214a71379ecf7a1f840166927774622cb3ea7298c3d52affca"
+        }
+      },
+      "request_evidence": {
+        "raw_response_files": 997,
+        "metadata_files": 0,
+        "provider_request_ids_available": false,
+        "total_tokens": null,
+        "total_success_latency_seconds": null,
+        "max_recorded_attempt": null
+      },
+      "excluded_ids": [
+        1,
+        453,
+        885
+      ],
+      "paired_gains": 199,
+      "paired_losses": 0
+    },
+    {
+      "run": 2,
+      "model": "qwen3.5-plus",
+      "artifacts": {
+        "direct": {
+          "prediction_sha256": "06f17b233720d1f7748ebbf1781feb20fe263de988b46b8fe48e2540396513f6",
+          "metrics_sha256": "6be7f30bfa155cf8c9bc386c5fd536cc58f7a5ddfe6d9acb7ae4b38298b21059"
+        },
+        "repaired": {
+          "prediction_sha256": "f1e2cd7ea46fef8d57acbb49478030fa5d86ba624a2d6b8b5457be21fd1f062b",
+          "metrics_sha256": "1b73fe6d6a2403d9b13513234cf2cc66226830e0c8b039b7ae7bf723dd961ade"
+        }
+      },
+      "request_evidence": {
+        "raw_response_files": 997,
+        "metadata_files": 997,
+        "provider_request_ids_available": false,
+        "total_tokens": 6958738,
+        "total_success_latency_seconds": 12320.252083539963,
+        "max_recorded_attempt": 1
+      },
+      "excluded_ids": [
+        1,
+        453,
+        885
+      ],
+      "paired_gains": 188,
+      "paired_losses": 0
+    },
+    {
+      "run": 3,
+      "model": "qwen3.5-plus",
+      "artifacts": {
+        "direct": {
+          "prediction_sha256": "bafc22d8782d47a9b613adf59b459c681ba861e6ce3590998f3a3fd45d9683fe",
+          "metrics_sha256": "143882022ae319d15922086589a2874cfe854e1529e6ded47eee6504e5358ebd"
+        },
+        "repaired": {
+          "prediction_sha256": "17caa4821c22edd0d99856818a8a938dde268b0ee8b1bdb21d10c46ac3b216c7",
+          "metrics_sha256": "288e313c16e690df1e567da566d9453df7273d2d9dfc9582a849351926d32938"
+        }
+      },
+      "request_evidence": {
+        "raw_response_files": 997,
+        "metadata_files": 997,
+        "provider_request_ids_available": false,
+        "total_tokens": 6958719,
+        "total_success_latency_seconds": 12331.699324131012,
+        "max_recorded_attempt": 1
+      },
+      "excluded_ids": [
+        1,
+        453,
+        885
+      ],
+      "paired_gains": 188,
+      "paired_losses": 0
+    }
+  ],
+  "cache_comparisons": [
+    {
+      "runs": [
+        1,
+        2
+      ],
+      "shared_request_keys": 997,
+      "identical_response_files": 113,
+      "different_response_files": 884
+    },
+    {
+      "runs": [
+        1,
+        3
+      ],
+      "shared_request_keys": 997,
+      "identical_response_files": 121,
+      "different_response_files": 876
+    },
+    {
+      "runs": [
+        2,
+        3
+      ],
+      "shared_request_keys": 997,
+      "identical_response_files": 271,
+      "different_response_files": 726
+    }
+  ],
+  "replication_status": "Separate directories and response differences support distinct stored generations; no request IDs and missing run-1 usage prevent a complete provider-level independence/cost audit."
+}

@@ -5,6 +5,7 @@ from requests.exceptions import SSLError
 import time
 import sys
 import pandas as pd
+from utils.paths import DATABASE
 import numpy as np
 
 # This tool refers to the "DistanceMatrix" in the paper. Considering this data obtained from Google API, we consistently use this name in the code. 
@@ -13,7 +14,7 @@ import numpy as np
 class GoogleDistanceMatrix:
     def __init__(self, subscription_key: str="") -> None:
         self.gplaces_api_key: str = subscription_key
-        self.data =  pd.read_csv('../database/googleDistanceMatrix/distance.csv')
+        self.data =  pd.read_csv(DATABASE / 'googleDistanceMatrix/distance.csv')
         print("GoogleDistanceMatrix loaded.")
 
     def run(self, origin, destination, mode='driving'):

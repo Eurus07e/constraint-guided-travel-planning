@@ -1,12 +1,19 @@
 # Result artifacts
 
-`metrics_summary.csv` contains the compact table used in the project README
-and final course paper. Values are percentages from a local reproduction of
-the official TravelPlanner evaluation protocol on the 180-instance validation
-split.
+- `metrics_summary.csv`: historical 180-instance validation table, in percentages.
+- `frozen/`: query-free predictions, sample outcomes, expected metrics and hashes.
+- `replay_verification.json`: fresh replay of all 13 historical methods.
+- `reconstruction_verification.json`: exact 180-plan deterministic reconstruction.
+- `audit_comparison.json`: legacy versus strict audit calibration on frozen plans.
+- `paired_analysis.json`: conditional paired intervals and exploratory comparisons.
+- `replication/`: separately labeled archived Qwen evidence, provenance and the
+  status of new model experiments.
 
-The repository intentionally omits raw model generations, request caches, and
-per-instance debug logs. Those artifacts are large, provider-specific, and not
-required to inspect the headline comparison. The final paper documents the
-experimental settings, limitations, and artifact paths used in the original
-working directory.
+Run `python -m scripts.verify_frozen` without data or credentials. Run
+`python -m scripts.replay_frozen` with the official database to recompute validity.
+Run `python -m scripts.build_public_artifacts` to regenerate public tables and
+paper update tables. The legacy `scripts/build_report_artifacts.py` remains for
+historical working-directory analyses that need excluded raw debug logs.
+
+Raw provider responses, credentials, local database files and new request caches
+are excluded. Historical task text is not redistributed in the frozen predictions.

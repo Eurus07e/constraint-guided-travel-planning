@@ -1,0 +1,110 @@
+{
+  "scope": "Conditional on these frozen predictions and the development split; intervals do not measure model rerun uncertainty. Component contrasts are exploratory, not isolated causal effects.",
+  "comparisons": {
+    "direct_to_verifier_hybrid_agent": {
+      "n": 180,
+      "before_pass": 36,
+      "after_pass": 49,
+      "gains": 13,
+      "losses": 0,
+      "delta_percentage_points": 7.222222222222221,
+      "paired_bootstrap_95_ci_percentage_points": [
+        3.888888888888889,
+        11.11111111111111
+      ],
+      "mcnemar_exact_two_sided_p": 0.000244140625,
+      "bootstrap_samples": 20000,
+      "bootstrap_seed": 20260904
+    },
+    "verifier_hybrid_agent_to_seeded_repair_probe": {
+      "n": 180,
+      "before_pass": 49,
+      "after_pass": 88,
+      "gains": 39,
+      "losses": 0,
+      "delta_percentage_points": 21.666666666666668,
+      "paired_bootstrap_95_ci_percentage_points": [
+        15.555555555555555,
+        27.77777777777778
+      ],
+      "mcnemar_exact_two_sided_p": 3.637978807091713e-12,
+      "bootstrap_samples": 20000,
+      "bootstrap_seed": 20260904
+    },
+    "seeded_repair_probe_to_multi_agent_seeded_r2_n3": {
+      "n": 180,
+      "before_pass": 88,
+      "after_pass": 84,
+      "gains": 3,
+      "losses": 7,
+      "delta_percentage_points": -2.2222222222222223,
+      "paired_bootstrap_95_ci_percentage_points": [
+        -5.555555555555555,
+        1.1111111111111112
+      ],
+      "mcnemar_exact_two_sided_p": 0.34375,
+      "bootstrap_samples": 20000,
+      "bootstrap_seed": 20260904
+    },
+    "seeded_repair_probe_to_cc_mar_r3": {
+      "n": 180,
+      "before_pass": 88,
+      "after_pass": 63,
+      "gains": 4,
+      "losses": 29,
+      "delta_percentage_points": -13.88888888888889,
+      "paired_bootstrap_95_ci_percentage_points": [
+        -20.0,
+        -8.333333333333332
+      ],
+      "mcnemar_exact_two_sided_p": 1.0928604751825333e-05,
+      "bootstrap_samples": 20000,
+      "bootstrap_seed": 20260904
+    },
+    "cc_mar_r3_to_cc_mar_no_critic": {
+      "n": 180,
+      "before_pass": 63,
+      "after_pass": 61,
+      "gains": 1,
+      "losses": 3,
+      "delta_percentage_points": -1.1111111111111112,
+      "paired_bootstrap_95_ci_percentage_points": [
+        -3.3333333333333335,
+        1.1111111111111112
+      ],
+      "mcnemar_exact_two_sided_p": 0.625,
+      "bootstrap_samples": 20000,
+      "bootstrap_seed": 20260904
+    },
+    "cc_mar_r3_to_cc_mar_no_board": {
+      "n": 180,
+      "before_pass": 63,
+      "after_pass": 62,
+      "gains": 4,
+      "losses": 5,
+      "delta_percentage_points": -0.5555555555555556,
+      "paired_bootstrap_95_ci_percentage_points": [
+        -3.888888888888889,
+        2.7777777777777777
+      ],
+      "mcnemar_exact_two_sided_p": 1.0,
+      "bootstrap_samples": 20000,
+      "bootstrap_seed": 20260904
+    },
+    "cc_mar_r3_to_cc_mar_no_specialization": {
+      "n": 180,
+      "before_pass": 63,
+      "after_pass": 65,
+      "gains": 3,
+      "losses": 1,
+      "delta_percentage_points": 1.1111111111111112,
+      "paired_bootstrap_95_ci_percentage_points": [
+        -1.1111111111111112,
+        3.3333333333333335
+      ],
+      "mcnemar_exact_two_sided_p": 0.625,
+      "bootstrap_samples": 20000,
+      "bootstrap_seed": 20260904
+    }
+  }
+}

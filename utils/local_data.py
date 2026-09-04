@@ -7,7 +7,8 @@ from datasets import load_dataset
 
 DATASET_NAME = "osunlp/TravelPlanner"
 ROOT_DIR = Path(__file__).resolve().parents[1]
-LOCAL_DATABASE_DIR = ROOT_DIR / "database"
+from utils.paths import DATABASE
+LOCAL_DATABASE_DIR = DATABASE
 
 
 def _load_local_validation_records():

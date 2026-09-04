@@ -1,0 +1,15 @@
+{
+  "status": "blocked_authentication",
+  "checked_date": "2026-09-04",
+  "providers": {
+    "deepseek-v4-flash": {
+      "http_status": 401,
+      "batch_dispatched": false
+    },
+    "qwen3.5-plus": {
+      "http_status": 401,
+      "batch_dispatched": false
+    }
+  },
+  "next_action": "Update local API credentials and run scripts.run_replication once per provider. No new comparative results are claimed."
+}
