@@ -6,7 +6,7 @@
 
 [![Paper](https://img.shields.io/badge/paper-PDF-b31b1b?style=flat-square)](paper/constraint_contract_multi_agent_repair.pdf)
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776ab?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-offline%20unit%20suite-2ea44f?style=flat-square)](#quick-start)
+[![Tests](https://github.com/Eurus07e/constraint-guided-travel-planning/actions/workflows/tests.yml/badge.svg)](https://github.com/Eurus07e/constraint-guided-travel-planning/actions/workflows/tests.yml)
 [![License](https://img.shields.io/badge/license-MIT-111111?style=flat-square)](LICENSE)
 
 Course research project for *Introduction to Artificial Intelligence*, Nanjing University.

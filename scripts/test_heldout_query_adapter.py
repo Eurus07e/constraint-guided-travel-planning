@@ -1,4 +1,5 @@
 import unittest
+import os
 from pathlib import Path
 
 from scripts.heldout_query_adapter import recover_evaluator_fields, validate_against_split
@@ -36,6 +37,7 @@ class HeldoutQueryAdapterTest(unittest.TestCase):
         )
         self.assertEqual(recovered["visiting_city_number"], 3)
 
+    @unittest.skipUnless(os.getenv("TP_INTEGRATION") == "1", "requires the official benchmark data")
     def test_validation_split_recovery_is_exact(self):
         try:
             from datasets import Dataset, load_dataset
